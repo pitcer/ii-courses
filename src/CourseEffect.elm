@@ -1,14 +1,14 @@
-module CourseEffect exposing (courseEffects, get, CourseEffect)
+module CourseEffect exposing (CourseEffect, Key, courseEffects, get)
 
 import Dict exposing (Dict)
 
 
-type alias CourseEffectKey =
+type alias Key =
     String
 
 
 type alias CourseEffect =
-    { id : CourseEffectKey
+    { id : Key
     , name : String
     }
 
@@ -28,13 +28,13 @@ courseEffects =
     ]
 
 
-courseEffectsDict : Dict CourseEffectKey CourseEffect
+courseEffectsDict : Dict Key CourseEffect
 courseEffectsDict =
     courseEffects
         |> List.map (\effect -> ( effect.id, effect ))
         |> Dict.fromList
 
 
-get : CourseEffectKey -> Maybe CourseEffect
-get key =
-    Dict.get key courseEffectsDict
+get : Key -> Maybe CourseEffect
+get id =
+    Dict.get id courseEffectsDict

@@ -1,11 +1,13 @@
 module Main exposing (..)
 
 import Browser
+import Browser.Events exposing (Visibility(..))
 import Course exposing (Course)
+import CourseEffect exposing (CourseEffect)
 import CourseType exposing (CourseType)
 import Dict exposing (Dict)
 import Html exposing (Html, button, div, input, option, select, table, td, text, th, thead, tr)
-import Html.Attributes exposing (name, placeholder, value)
+import Html.Attributes exposing (disabled, hidden, name, placeholder, selected, value)
 import Html.Events exposing (onClick, onInput)
 
 
@@ -19,7 +21,10 @@ type Message
     | CourseNameInput String
     | CourseEctsInput String
     | CourseTypeSelected String
+    | CourseEffectSelected String
     | CourseRemove String
+    | EffectRemove CourseEffect.Key
+    | AddEffect
     | AddCourse
 
 
@@ -29,6 +34,8 @@ type alias Model =
     , courseName : String
     , courseEcts : Int
     , courseType : CourseType
+    , selectedEffect : Maybe CourseEffect
+    , courseEffects : Dict CourseEffect.Key CourseEffect
     }
 
 
@@ -39,6 +46,8 @@ init =
     , courseName = ""
     , courseEcts = 0
     , courseType = CourseType.defaultCourseType
+    , selectedEffect = Nothing
+    , courseEffects = Dict.empty
     }
 
 
@@ -63,6 +72,17 @@ update message model =
             in
             { model | courseType = courseType }
 
+        CourseEffectSelected effectString ->
+            { model | selectedEffect = CourseEffect.get effectString }
+
+        AddEffect ->
+            case model.selectedEffect of
+                Just effect ->
+                    { model | courseEffects = Dict.insert effect.id effect model.courseEffects }
+
+                Nothing ->
+                    model
+
         AddCourse ->
             let
                 course : Course
@@ -71,13 +91,16 @@ update message model =
                     , name = model.courseName
                     , ects = model.courseEcts
                     , courseType = model.courseType
-                    , effects = []
+                    , effects = Dict.values model.courseEffects
                     }
             in
             { model | courses = Dict.insert model.courseId course model.courses }
 
         CourseRemove courseId ->
             { model | courses = Dict.remove courseId model.courses }
+
+        EffectRemove effectId ->
+            { model | courseEffects = Dict.remove effectId model.courseEffects }
 
 
 view : Model -> Html Message
@@ -123,15 +146,62 @@ view model =
         courseTypeSelection : Html Message
         courseTypeSelection =
             select [ name "Typ", onInput CourseTypeSelected ]
-                (List.map courseTypeToOption CourseType.courseTypes)
+                (selectionPlaceholder "---" :: List.map courseTypeToOption CourseType.courseTypes)
+
+        courseEffectToOption : CourseEffect -> Html Message
+        courseEffectToOption effect =
+            option [ value effect.id ]
+                [ text effect.name ]
+
+        selectionPlaceholder : String -> Html Message
+        selectionPlaceholder content =
+            option [ value "", selected True, disabled True, hidden True ]
+                [ text content ]
+
+        courseEffectSelection : Html Message
+        courseEffectSelection =
+            select [ name "Efekt", onInput CourseEffectSelected ]
+                (selectionPlaceholder "---" :: List.map courseEffectToOption CourseEffect.courseEffects)
+
+        courseEffectsList : Html Message
+        courseEffectsList =
+            div []
+                (let
+                    effects : List CourseEffect
+                    effects =
+                        Dict.values model.courseEffects
+
+                    effectToDivWithDeletion : CourseEffect -> Html Message
+                    effectToDivWithDeletion effect =
+                        div []
+                            [ text effect.name
+                            , button [ onClick (EffectRemove effect.id) ] [ text "Usuń" ]
+                            ]
+                 in
+                 if List.isEmpty effects then
+                    [ text "Brak" ]
+
+                 else
+                    List.map effectToDivWithDeletion effects
+                )
+
+        courseEffectAddButton : Html Message
+        courseEffectAddButton =
+            button [ onClick AddEffect ] [ text "Dodaj efekt" ]
+
+        courseAddButton : Html Message
+        courseAddButton =
+            button [ onClick AddCourse ] [ text "Dodaj przedmiot" ]
     in
     div []
         [ div []
-            [ input [ placeholder "ID", value model.courseId, onInput CourseIdInput ] []
-            , input [ placeholder "Nazwa", value model.courseName, onInput CourseNameInput ] []
-            , input [ placeholder "ECTS", value (String.fromInt model.courseEcts), onInput CourseEctsInput ] []
-            , courseTypeSelection
-            , button [ onClick AddCourse ] [ text "Dodaj przedmiot" ]
+            [ div [] [ input [ placeholder "ID", value model.courseId, onInput CourseIdInput ] [] ]
+            , div [] [ input [ placeholder "Nazwa", value model.courseName, onInput CourseNameInput ] [] ]
+            , div [] [ input [ placeholder "ECTS", value (String.fromInt model.courseEcts), onInput CourseEctsInput ] [] ]
+            , div [] [ courseTypeSelection ]
+            , div [] [ courseEffectsList ]
+            , div [] [ courseEffectSelection, courseEffectAddButton ]
+            , div [] [ courseAddButton ]
             ]
         , courseTable
         ]
