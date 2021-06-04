@@ -19,4 +19,4 @@ effectsToString effects =
         "Brak"
 
     else
-        effects |> List.map CourseEffect.getName |> String.join ", "
+        effects |> List.map .name |> String.join ", "

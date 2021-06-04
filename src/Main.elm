@@ -59,7 +59,7 @@ update message model =
                 courseType =
                     Maybe.withDefault
                         CourseType.defaultCourseType
-                        (CourseType.find courseTypeString)
+                        (CourseType.get courseTypeString)
             in
             { model | courseType = courseType }
 
@@ -105,7 +105,7 @@ view model =
                 [ td [] [ text course.id ]
                 , td [] [ text course.name ]
                 , td [] [ text (String.fromInt course.ects) ]
-                , td [] [ text (CourseType.getName course.courseType) ]
+                , td [] [ text course.courseType.name ]
                 , td [] [ text (Course.effectsToString course.effects) ]
                 , td [] [ courseTableRemoveButton course ]
                 ]
@@ -117,8 +117,8 @@ view model =
 
         courseTypeToOption : CourseType -> Html Message
         courseTypeToOption courseType =
-            option [ value (CourseType.getId courseType) ]
-                [ text (CourseType.getName courseType) ]
+            option [ value courseType.id ]
+                [ text courseType.name ]
 
         courseTypeSelection : Html Message
         courseTypeSelection =

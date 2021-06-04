@@ -1,8 +1,16 @@
-module CourseType exposing (CourseType, courseTypes, find, getId, getName, defaultCourseType)
+module CourseType exposing (CourseType, courseTypes, defaultCourseType, get)
+
+import Dict exposing (Dict)
 
 
-type CourseType
-    = CourseType String String
+type alias CourseTypeKey =
+    String
+
+
+type alias CourseType =
+    { id : CourseTypeKey
+    , name : String
+    }
 
 
 defaultCourseType : CourseType
@@ -33,20 +41,13 @@ courseTypes =
     ]
 
 
-getId : CourseType -> String
-getId courseType =
-    case courseType of
-        CourseType id _ ->
-            id
+courseTypeDict : Dict CourseTypeKey CourseType
+courseTypeDict =
+    courseTypes
+        |> List.map (\courseType -> ( courseType.id, courseType ))
+        |> Dict.fromList
 
 
-getName : CourseType -> String
-getName courseType =
-    case courseType of
-        CourseType _ name ->
-            name
-
-
-find : String -> Maybe CourseType
-find id =
-    courseTypes |> List.filter (\element -> (getId element) == id) |> List.head
+get : CourseTypeKey -> Maybe CourseType
+get id =
+    Dict.get id courseTypeDict

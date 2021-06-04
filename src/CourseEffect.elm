@@ -1,8 +1,16 @@
-module CourseEffect exposing (CourseEffect(..), courseEffects, find, getId, getName)
+module CourseEffect exposing (courseEffects, get, CourseEffect)
+
+import Dict exposing (Dict)
 
 
-type CourseEffect
-    = CourseEffect String String
+type alias CourseEffectKey =
+    String
+
+
+type alias CourseEffect =
+    { id : CourseEffectKey
+    , name : String
+    }
 
 
 courseEffects : List CourseEffect
@@ -20,20 +28,13 @@ courseEffects =
     ]
 
 
-getId : CourseEffect -> String
-getId courseEffect =
-    case courseEffect of
-        CourseEffect id _ ->
-            id
+courseEffectsDict : Dict CourseEffectKey CourseEffect
+courseEffectsDict =
+    courseEffects
+        |> List.map (\effect -> ( effect.id, effect ))
+        |> Dict.fromList
 
 
-getName : CourseEffect -> String
-getName courseEffect =
-    case courseEffect of
-        CourseEffect _ name ->
-            name
-
-
-find : String -> Maybe CourseEffect
-find id =
-    courseEffects |> List.filter (\element -> getId element == id) |> List.head
+get : CourseEffectKey -> Maybe CourseEffect
+get key =
+    Dict.get key courseEffectsDict
