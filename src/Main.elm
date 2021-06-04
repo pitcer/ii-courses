@@ -3,6 +3,7 @@ module Main exposing (..)
 import Browser
 import Course exposing (Course)
 import CourseType exposing (CourseType)
+import Dict exposing (Dict)
 import Html exposing (Html, button, div, input, option, select, table, td, text, th, thead, tr)
 import Html.Attributes exposing (name, placeholder, value)
 import Html.Events exposing (onClick, onInput)
@@ -18,11 +19,12 @@ type Message
     | CourseNameInput String
     | CourseEctsInput String
     | CourseTypeSelected String
+    | CourseRemove String
     | AddCourse
 
 
 type alias Model =
-    { courses : List Course
+    { courses : Dict String Course
     , courseId : String
     , courseName : String
     , courseEcts : Int
@@ -32,7 +34,7 @@ type alias Model =
 
 init : Model
 init =
-    { courses = []
+    { courses = Dict.empty
     , courseId = ""
     , courseName = ""
     , courseEcts = 0
@@ -63,6 +65,7 @@ update message model =
 
         AddCourse ->
             let
+                course : Course
                 course =
                     { id = model.courseId
                     , name = model.courseName
@@ -71,7 +74,10 @@ update message model =
                     , effects = []
                     }
             in
-            { model | courses = course :: model.courses }
+            { model | courses = Dict.insert model.courseId course model.courses }
+
+        CourseRemove courseId ->
+            { model | courses = Dict.remove courseId model.courses }
 
 
 view : Model -> Html Message
@@ -85,7 +91,13 @@ view model =
                 , th [] [ text "ECTS" ]
                 , th [] [ text "Typ" ]
                 , th [] [ text "Efekty" ]
+                , th [] []
                 ]
+
+        courseTableRemoveButton : Course -> Html Message
+        courseTableRemoveButton course =
+            button [ onClick (CourseRemove course.id) ]
+                [ text "Usuń" ]
 
         courseToTableRow : Course -> Html Message
         courseToTableRow course =
@@ -95,12 +107,13 @@ view model =
                 , td [] [ text (String.fromInt course.ects) ]
                 , td [] [ text (CourseType.getName course.courseType) ]
                 , td [] [ text (Course.effectsToString course.effects) ]
+                , td [] [ courseTableRemoveButton course ]
                 ]
 
         courseTable : Html Message
         courseTable =
             table []
-                (courseTableHeader :: List.map courseToTableRow model.courses)
+                (courseTableHeader :: List.map courseToTableRow (Dict.values model.courses))
 
         courseTypeToOption : CourseType -> Html Message
         courseTypeToOption courseType =
