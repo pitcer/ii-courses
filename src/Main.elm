@@ -1,7 +1,6 @@
-module Main exposing (..)
+module Main exposing (main)
 
 import Browser
-import Browser.Events exposing (Visibility(..))
 import Course exposing (Course)
 import CourseEffect exposing (CourseEffect)
 import CourseType exposing (CourseType)
@@ -26,6 +25,7 @@ type Message
     | EffectRemove CourseEffect.Key
     | AddEffect
     | AddCourse
+    | ClearCourse
 
 
 type alias Model =
@@ -94,13 +94,26 @@ update message model =
                     , effects = Dict.values model.courseEffects
                     }
             in
-            { model | courses = Dict.insert model.courseId course model.courses }
+            { model | courses = Dict.insert model.courseId course model.courses } |> clearCourse
 
         CourseRemove courseId ->
             { model | courses = Dict.remove courseId model.courses }
 
         EffectRemove effectId ->
             { model | courseEffects = Dict.remove effectId model.courseEffects }
+
+        ClearCourse ->
+            clearCourse model
+
+
+clearCourse : Model -> Model
+clearCourse model =
+    { model
+        | courseId = ""
+        , courseName = ""
+        , courseEcts = 0
+        , courseEffects = Dict.empty
+    }
 
 
 view : Model -> Html Message
@@ -192,6 +205,9 @@ view model =
         courseAddButton : Html Message
         courseAddButton =
             button [ onClick AddCourse ] [ text "Dodaj przedmiot" ]
+
+        courseClearButton =
+            button [ onClick ClearCourse ] [ text "Wyczyść" ]
     in
     div []
         [ div []
@@ -201,7 +217,7 @@ view model =
             , div [] [ courseTypeSelection ]
             , div [] [ courseEffectsList ]
             , div [] [ courseEffectSelection, courseEffectAddButton ]
-            , div [] [ courseAddButton ]
+            , div [] [ courseAddButton, courseClearButton ]
             ]
         , courseTable
         ]
